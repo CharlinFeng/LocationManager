@@ -33,6 +33,10 @@ typealias LMReverseGeocodeCompletionHandler = ((reverseGecodeInfo:NSDictionary?,
 typealias LMGeocodeCompletionHandler = ((gecodeInfo:NSDictionary?,placemark:CLPlacemark?, error:String?)->Void)?
 typealias LMLocationCompletionHandler = ((latitude:Double, longitude:Double, status:String, verboseMessage:String, error:String?)->())?
 
+
+
+
+
 // Todo: Keep completion handler differerent for all services, otherwise only one will work
 enum GeoCodingType{
     
@@ -170,7 +174,7 @@ class LocationManager: NSObject,CLLocationManagerDelegate {
         let iOS8 = iosVersion >= 8
         
         if iOS8{
-            
+           
             //locationManager.requestAlwaysAuthorization() // add in plist NSLocationAlwaysUsageDescription
             if #available(iOS 8.0, *) {
                 locationManager.requestWhenInUseAuthorization()
@@ -711,4 +715,34 @@ private class AddressParser: NSObject{
     }
     
 }
+
+// NSLocationWhenInUseUsageDescription, NSLocationAlwaysUsageDescription
+extension LocationManager {
+
+    /** 获取一次位置信息 */
+    static func getOnceLocation(locaClosure: ((loca: CLLocationCoordinate2D, errorMsg: String!) -> Void)!){
+    
+        let locationManager = LocationManager.sharedInstance
+
+        locationManager.autoUpdate = true
+        
+        locationManager.startUpdatingLocationWithCompletionHandler { (latitude, longitude, status, verboseMessage, error) -> () in
+            
+            locaClosure?(loca: CLLocationCoordinate2DMake(latitude, longitude), errorMsg: error)
+            
+            locationManager.stopUpdatingLocation()
+        }
+    
+    }
+    
+    
+}
+
+
+
+
+
+
+
+
 
