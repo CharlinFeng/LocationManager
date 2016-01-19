@@ -46,6 +46,9 @@ enum GeoCodingType{
 
 class LocationManager: NSObject,CLLocationManagerDelegate {
     
+    /** 用户最近的坐标信息 */
+    var latestCoordinate: CLLocationCoordinate2D!
+    
     /* Private variables */
     private var completionHandler:LMLocationCompletionHandler
     
@@ -718,21 +721,104 @@ private class AddressParser: NSObject{
 
 // NSLocationWhenInUseUsageDescription, NSLocationAlwaysUsageDescription
 extension LocationManager {
-
-    /** 获取一次位置信息 */
-    static func getOnceLocation(locaClosure: ((loca: CLLocationCoordinate2D, errorMsg: String!) -> Void)!){
     
-        let locationManager = LocationManager.sharedInstance
+    static var errorMsg: String {return "无最近定位信息"}
+    
+    class LocationModel{
+    
+        /** 国家 */
+        var country: String!
+        
+        /** 省份 */
+        var provence: String!
+        
+        /** 城市 */
+        var city: String!
+        
+        /** 城市区域 */
+        var citySubArea: String!
+        
+        /** 街道 */
+        var street: String!
+        
+        
+        /** 解析 */
+        class func parse(dict: NSDictionary!) -> LocationModel!{
+        
+            let m = LocationModel()
+            
+            m.country = dict?["country"] as? String
+            
+            m.provence = dict?["administrativeArea"] as? String
+            
+            m.city = dict?["locality"] as? String
+            
+            m.citySubArea = dict?["subLocality"] as? String
+            
+            m.street = dict?["streetNumber"] as? String
+            
+            return m
+        }
+    }
 
+
+
+
+    static var latestCoordinate: CLLocationCoordinate2D! {return LocationManager.sharedInstance.latestCoordinate}
+    
+    
+    /** 获取最新最近的历史位置坐标信息 */
+    static func getLatestLocation(locaClosure locaClosure: ((coordinate: CLLocationCoordinate2D!, errorMsg: String!) -> Void)!, geoClosure:((m: LocationModel!, e: String!) -> Void)!){
+
+        if latestCoordinate == nil {
+            
+            locaClosure?(coordinate: latestCoordinate,errorMsg: errorMsg)
+            geoClosure?(m: nil,e: errorMsg)
+            return
+        }
+        locaClosure?(coordinate: latestCoordinate,errorMsg: nil)
+        getOnceReverseGeocode(latestCoordinate, resClosure: geoClosure)
+    }
+    
+    
+    
+    /** 直接重新获取一次位置坐标信息 */
+    static func getOnceLocation(locaClosure locaClosure: ((coordinate: CLLocationCoordinate2D!, errorMsg: String!) -> Void)!, geoClosure:((m: LocationModel!, e: String!) -> Void)!){
+        
+        let locationManager = LocationManager.sharedInstance
+        
         locationManager.autoUpdate = true
         
         locationManager.startUpdatingLocationWithCompletionHandler { (latitude, longitude, status, verboseMessage, error) -> () in
             
-            locaClosure?(loca: CLLocationCoordinate2DMake(latitude, longitude), errorMsg: error)
-            
             locationManager.stopUpdatingLocation()
+            
+            let coordinate = CLLocationCoordinate2DMake(latitude, longitude)
+            
+            locaClosure?(coordinate: coordinate, errorMsg: error)
+            
+            //更新最新的位置信息
+            locationManager.latestCoordinate = coordinate
+            
+            getOnceReverseGeocode(coordinate, resClosure: geoClosure)
         }
+    }
     
+    
+    
+    /** 获取一次位置反地理编码信息 */
+    private static func getOnceReverseGeocode(coordinate: CLLocationCoordinate2D!, resClosure: ((m: LocationModel!, e: String!) -> Void)!){
+
+        if coordinate == nil {resClosure?(m: nil, e: errorMsg); return}
+        
+        let locationManager = LocationManager.sharedInstance
+
+        locationManager.reverseGeocodeLocationWithLatLon(latitude: coordinate.latitude, longitude: coordinate.longitude) { (reverseGecodeInfo,placemark,error) -> Void in
+            
+            let m = LocationModel.parse(reverseGecodeInfo)
+            
+            resClosure?(m: m, e: error)
+        }
     }
     
     
