@@ -764,32 +764,36 @@ extension LocationManager {
     }
 
 
-    static var latestCoordinate: CLLocationCoordinate2D! {return LocationManager.sharedInstance.latestCoordinate}
-    
-    
-    
-    /** 获取最新最近的历史位置坐标信息 */
-    static func getCacheLocation(locaClosure locaClosure: ((coordinate: CLLocationCoordinate2D!, errorMsg: String!) -> Void)!, geoClosure:((m: LocationModel!, e: String!) -> Void)!){
+    static var cacheCoordinate: CLLocationCoordinate2D! {
         
         var c: CLLocationCoordinate2D! = nil
-        var e: String! = nil
         
         //内存获取
-        c = latestCoordinate
-
+        c = LocationManager.sharedInstance.latestCoordinate
+        
         //缓存中获取
         if c == nil {
-        
+            
             let defaults = NSUserDefaults.standardUserDefaults()
             let la = defaults.doubleForKey(LatitudeKey)
             let lo = defaults.doubleForKey(LongitudeKey)
             c = CLLocationCoordinate2DMake(la, lo)
         }
         
-        if c == nil {e = errorMsg}
+        return c
+    }
+    
+    
+    
+    /** 获取最新最近的历史位置坐标信息 */
+    static func getCacheLocation(locaClosure locaClosure: ((coordinate: CLLocationCoordinate2D!, errorMsg: String!) -> Void)!, geoClosure:((m: LocationModel!, e: String!) -> Void)!){
         
-        locaClosure?(coordinate: c,errorMsg: e)
-        getOnceReverseGeocode(c, resClosure: geoClosure)
+        var e: String! = nil
+        
+        if cacheCoordinate == nil {e = errorMsg}
+        
+        locaClosure?(coordinate: cacheCoordinate,errorMsg: e)
+        getOnceReverseGeocode(cacheCoordinate, resClosure: geoClosure)
     }
     
     
