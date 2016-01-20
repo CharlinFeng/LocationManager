@@ -721,8 +721,10 @@ private class AddressParser: NSObject{
 
 // NSLocationWhenInUseUsageDescription, NSLocationAlwaysUsageDescription
 extension LocationManager {
-    
+
     static var errorMsg: String {return "无最近定位信息"}
+    static var LatitudeKey: String {return "LatitudeKey"}
+    static var LongitudeKey: String {return "LongitudeKey"}
     
     class LocationModel{
     
@@ -762,23 +764,34 @@ extension LocationManager {
     }
 
 
-
-
     static var latestCoordinate: CLLocationCoordinate2D! {return LocationManager.sharedInstance.latestCoordinate}
     
     
+    
     /** 获取最新最近的历史位置坐标信息 */
-    static func getLatestLocation(locaClosure locaClosure: ((coordinate: CLLocationCoordinate2D!, errorMsg: String!) -> Void)!, geoClosure:((m: LocationModel!, e: String!) -> Void)!){
+    static func getCacheLocation(locaClosure locaClosure: ((coordinate: CLLocationCoordinate2D!, errorMsg: String!) -> Void)!, geoClosure:((m: LocationModel!, e: String!) -> Void)!){
+        
+        var c: CLLocationCoordinate2D! = nil
+        var e: String! = nil
+        
+        //内存获取
+        c = latestCoordinate
 
-        if latestCoordinate == nil {
-            
-            locaClosure?(coordinate: latestCoordinate,errorMsg: errorMsg)
-            geoClosure?(m: nil,e: errorMsg)
-            return
+        //缓存中获取
+        if c == nil {
+        
+            let defaults = NSUserDefaults.standardUserDefaults()
+            let la = defaults.doubleForKey(LatitudeKey)
+            let lo = defaults.doubleForKey(LongitudeKey)
+            c = CLLocationCoordinate2DMake(la, lo)
         }
-        locaClosure?(coordinate: latestCoordinate,errorMsg: nil)
-        getOnceReverseGeocode(latestCoordinate, resClosure: geoClosure)
+        
+        if c == nil {e = errorMsg}
+        
+        locaClosure?(coordinate: c,errorMsg: e)
+        getOnceReverseGeocode(c, resClosure: geoClosure)
     }
+    
     
     
     
@@ -797,8 +810,12 @@ extension LocationManager {
             
             locaClosure?(coordinate: coordinate, errorMsg: error)
             
-            //更新最新的位置信息
+            //更新内存
             locationManager.latestCoordinate = coordinate
+            //更新缓存
+            let defaults = NSUserDefaults.standardUserDefaults()
+            defaults.setDouble(latitude, forKey: LatitudeKey)
+            defaults.setDouble(longitude, forKey: LongitudeKey)
             
             getOnceReverseGeocode(coordinate, resClosure: geoClosure)
         }
