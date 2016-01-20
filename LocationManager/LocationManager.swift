@@ -793,8 +793,6 @@ extension LocationManager {
     }
     
     
-    
-    
     /** 直接重新获取一次位置坐标信息 */
     static func getOnceLocation(locaClosure locaClosure: ((coordinate: CLLocationCoordinate2D!, errorMsg: String!) -> Void)!, geoClosure:((m: LocationModel!, e: String!) -> Void)!){
         
