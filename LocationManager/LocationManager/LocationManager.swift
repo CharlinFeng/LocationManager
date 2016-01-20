@@ -59,13 +59,13 @@ class LocationManager: NSObject,CLLocationManagerDelegate {
     private var locationManager: CLLocationManager!
     private var verboseMessage = "Calibrating"
     
-//    private let verboseMessageDictionary = [CLAuthorizationStatus.NotDetermined:"You have not yet made a choice with regards to this application.",
-//        CLAuthorizationStatus.Restricted:"This application is not authorized to use location services. Due to active restrictions on location services, the user cannot change this status, and may not have personally denied authorization.",
-//        CLAuthorizationStatus.Denied:"You have explicitly denied authorization for this application, or location services are disabled in Settings.",
-//        CLAuthorizationStatus.AuthorizedAlways:"App is Authorized to use location services.",
-//        CLAuthorizationStatus.AuthorizedWhenInUse:"You have granted authorization to use your location only when the app is visible to you."]
-//    
-//    
+    //    private let verboseMessageDictionary = [CLAuthorizationStatus.NotDetermined:"You have not yet made a choice with regards to this application.",
+    //        CLAuthorizationStatus.Restricted:"This application is not authorized to use location services. Due to active restrictions on location services, the user cannot change this status, and may not have personally denied authorization.",
+    //        CLAuthorizationStatus.Denied:"You have explicitly denied authorization for this application, or location services are disabled in Settings.",
+    //        CLAuthorizationStatus.AuthorizedAlways:"App is Authorized to use location services.",
+    //        CLAuthorizationStatus.AuthorizedWhenInUse:"You have granted authorization to use your location only when the app is visible to you."]
+    //
+    //
     var delegate:LocationManagerDelegate? = nil
     
     var latitude:Double = 0.0
@@ -177,7 +177,7 @@ class LocationManager: NSObject,CLLocationManagerDelegate {
         let iOS8 = iosVersion >= 8
         
         if iOS8{
-           
+            
             //locationManager.requestAlwaysAuthorization() // add in plist NSLocationAlwaysUsageDescription
             if #available(iOS 8.0, *) {
                 locationManager.requestWhenInUseAuthorization()
@@ -296,7 +296,7 @@ class LocationManager: NSObject,CLLocationManagerDelegate {
                 hasAuthorised = true
             }
             
-//            verboseMessage = verboseMessageDictionary[verboseKey]!
+            //            verboseMessage = verboseMessageDictionary[verboseKey]!
             
             if (hasAuthorised == true) {
                 startLocationManger()
@@ -721,13 +721,13 @@ private class AddressParser: NSObject{
 
 // NSLocationWhenInUseUsageDescription, NSLocationAlwaysUsageDescription
 extension LocationManager {
-
+    
     static var errorMsg: String {return "无最近定位信息"}
     static var LatitudeKey: String {return "LatitudeKey"}
     static var LongitudeKey: String {return "LongitudeKey"}
     
     class LocationModel{
-    
+        
         /** 国家 */
         var country: String!
         
@@ -746,7 +746,7 @@ extension LocationManager {
         
         /** 解析 */
         class func parse(dict: NSDictionary!) -> LocationModel!{
-        
+            
             let m = LocationModel()
             
             m.country = dict?["country"] as? String
@@ -762,8 +762,8 @@ extension LocationManager {
             return m
         }
     }
-
-
+    
+    
     static var cacheCoordinate: CLLocationCoordinate2D! {
         
         var c: CLLocationCoordinate2D! = nil
@@ -780,6 +780,12 @@ extension LocationManager {
             c = CLLocationCoordinate2DMake(la, lo)
         }
         
+        //屏蔽为坐标0的情况
+        if c != nil {
+            
+            if c.latitude == 0 && c.longitude == 0 {c = nil}
+        }
+        
         return c
     }
     
@@ -791,7 +797,7 @@ extension LocationManager {
         var e: String! = nil
         
         if cacheCoordinate == nil {e = errorMsg}
-        
+ 
         locaClosure?(coordinate: cacheCoordinate,errorMsg: e)
         getOnceReverseGeocode(cacheCoordinate, resClosure: geoClosure)
     }
@@ -827,11 +833,11 @@ extension LocationManager {
     
     /** 获取一次位置反地理编码信息 */
     private static func getOnceReverseGeocode(coordinate: CLLocationCoordinate2D!, resClosure: ((m: LocationModel!, e: String!) -> Void)!){
-
+        
         if coordinate == nil {resClosure?(m: nil, e: errorMsg); return}
         
         let locationManager = LocationManager.sharedInstance
-
+        
         locationManager.reverseGeocodeLocationWithLatLon(latitude: coordinate.latitude, longitude: coordinate.longitude) { (reverseGecodeInfo,placemark,error) -> Void in
             
             let m = LocationModel.parse(reverseGecodeInfo)
@@ -842,12 +848,3 @@ extension LocationManager {
     
     
 }
-
-
-
-
-
-
-
-
-
