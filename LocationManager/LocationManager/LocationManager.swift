@@ -719,12 +719,15 @@ private class AddressParser: NSObject{
     
 }
 
+extension CLLocationCoordinate2D {var isEmpty: Bool {return longitude == 0 && latitude == 0}}
+
 // NSLocationWhenInUseUsageDescription, NSLocationAlwaysUsageDescription
 extension LocationManager {
     
     static var errorMsg: String {return "无最近定位信息"}
     static var LatitudeKey: String {return "LatitudeKey"}
     static var LongitudeKey: String {return "LongitudeKey"}
+    static var cacheCoordinate_Empty: Bool {return cacheCoordinate?.isEmpty ?? true}
     
     class LocationModel{
         
@@ -846,5 +849,5 @@ extension LocationManager {
         }
     }
     
-    
 }
+
