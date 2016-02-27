@@ -49,6 +49,8 @@ class LocationManager: NSObject,CLLocationManagerDelegate {
     /** 用户最近的坐标信息 */
     var latestCoordinate: CLLocationCoordinate2D!
     
+    var isLocationed: Bool = false
+    
     /* Private variables */
     private var completionHandler:LMLocationCompletionHandler
     
@@ -746,7 +748,6 @@ extension LocationManager {
         /** 街道 */
         var street: String!
         
-        
         /** 解析 */
         class func parse(dict: NSDictionary!) -> LocationModel!{
             
@@ -795,25 +796,30 @@ extension LocationManager {
     
     
     /** 获取最新最近的历史位置坐标信息 */
-    static func getCacheLocation(locaClosure locaClosure: ((coordinate: CLLocationCoordinate2D!, errorMsg: String!) -> Void)!, geoClosure:((m: LocationModel!, e: String!) -> Void)!){
+    static func getCacheLocation(locaClosure locaClosure: ((coordinate: CLLocationCoordinate2D!, errorMsg: String!) -> Void)!){
         
         var e: String! = nil
         
         if cacheCoordinate == nil {e = errorMsg}
  
         locaClosure?(coordinate: cacheCoordinate,errorMsg: e)
-        getOnceReverseGeocode(cacheCoordinate, resClosure: geoClosure)
     }
     
     
-    /** 直接重新获取一次位置坐标信息 */
-    static func getOnceLocation(locaClosure locaClosure: ((coordinate: CLLocationCoordinate2D!, errorMsg: String!) -> Void)!, geoClosure:((m: LocationModel!, e: String!) -> Void)!){
+    /** 直接重新获取一次位置坐标信息, geoClosure:((m: LocationModel!, e: String!) -> Void)! */
+    static func getOnceLocation(locaClosure locaClosure: ((coordinate: CLLocationCoordinate2D!, errorMsg: String!) -> Void)!){
         
         let locationManager = LocationManager.sharedInstance
+        
+        locationManager.isLocationed = false
         
         locationManager.autoUpdate = true
         
         locationManager.startUpdatingLocationWithCompletionHandler { (latitude, longitude, status, verboseMessage, error) -> () in
+            
+            if locationManager.isLocationed {return}
+            
+            locationManager.isLocationed = true
             
             locationManager.stopUpdatingLocation()
             
@@ -827,17 +833,15 @@ extension LocationManager {
             let defaults = NSUserDefaults.standardUserDefaults()
             defaults.setDouble(latitude, forKey: LatitudeKey)
             defaults.setDouble(longitude, forKey: LongitudeKey)
-            
-            getOnceReverseGeocode(coordinate, resClosure: geoClosure)
         }
     }
     
     
     
     /** 获取一次位置反地理编码信息 */
-    private static func getOnceReverseGeocode(coordinate: CLLocationCoordinate2D!, resClosure: ((m: LocationModel!, e: String!) -> Void)!){
+    static func getOnceReverseGeocode(coordinate: CLLocationCoordinate2D!, geoClosure:((m: LocationModel!, e: String!) -> Void)!){
         
-        if coordinate == nil {resClosure?(m: nil, e: errorMsg); return}
+        if coordinate == nil {geoClosure?(m: nil, e: errorMsg); return}
         
         let locationManager = LocationManager.sharedInstance
         
@@ -845,7 +849,7 @@ extension LocationManager {
             
             let m = LocationModel.parse(reverseGecodeInfo)
             
-            resClosure?(m: m, e: error)
+            geoClosure?(m: m, e: error)
         }
     }
     
