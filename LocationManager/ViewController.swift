@@ -18,20 +18,19 @@ class ViewController: UIViewController {
  
     }
     
-    override func touchesBegan(touches: Set<UITouch>, withEvent event: UIEvent?) {
-        
+    override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
 
-        LocationManager.getCacheLocation { (coordinate, errorMsg) -> Void in
-            print("cache")
-        }
         
         // 历史
         LocationManager.getOnceLocation { (coordinate, errorMsg) -> Void in
             
-            LocationManager.getOnceReverseGeocode(coordinate, geoClosure: { (m, e) -> Void in
-                print(m.city)
-            })
+            LocationManager.getOnceReverseGeocode(coordinate: coordinate) { (m, s) in
+                print(m?.street)
+                print(s)
+            }
         }
+
+
         
         
 
